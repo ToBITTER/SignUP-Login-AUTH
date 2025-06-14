@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Auth Flow</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(to right, #8e0557, #1d1a75, #1a505f);
+      animation: gradientBG 10s ease infinite;
+      background-size: 200% 200%;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .tab-switcher {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .tab-switcher button {
+      flex: 1;
+      padding: 10px;
+      margin: 0 5px;
+      background-color: #f0f0f0;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .tab-switcher button.active {
+      background: linear-gradient(to right, #651545, #18165b);
+      color: white;
+    }
+
+    h2 {
+      text-align: center;
+      color: #444;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button.submit-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(to right, #651c48, #1b1956);
+      border: none;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button.submit-btn:hover {
+      opacity: 0.9;
+    }
+
+    .message {
+      text-align: center;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #d8000c;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="tab-switcher">
+      <button id="loginTab" class="active">Login</button>
+      <button id="signupTab">Sign Up</button>
+    </div>
+    <h2 id="formTitle">Login</h2>
+    <form id="authForm">
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" class="hidden" />
+      <input type="text" id="username" placeholder="Username (Sign Up Only)" class="hidden" />
+      <button type="submit" class="submit-btn">Next</button>
+    </form>
+    <div class="message" id="message"></div>
+  </div>
+
+  <script>
+    const loginTab = document.getElementById('loginTab');
+    const signupTab = document.getElementById('signupTab');
+    const formTitle = document.getElementById('formTitle');
+    const authForm = document.getElementById('authForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const usernameInput = document.getElementById('username');
+    const messageBox = document.getElementById('message');
+    const submitBtn = authForm.querySelector('.submit-btn');
+
+    let isLogin = true;
+    let step = 1;
+
+    function switchTab(loginMode) {
+      isLogin = loginMode;
+      step = 1;
+      formTitle.innerText = isLogin ? 'Login' : 'Sign Up';
+      loginTab.classList.toggle('active', isLogin);
+      signupTab.classList.toggle('active', !isLogin);
+      emailInput.classList.remove('hidden');
+      passwordInput.classList.add('hidden');
+      usernameInput.classList.add('hidden');
+      submitBtn.textContent = 'Next';
+      messageBox.innerText = '';
+    }
+
+    loginTab.addEventListener('click', () => switchTab(true));
+    signupTab.addEventListener('click', () => switchTab(false));
+
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (step === 1) {
+        if (!emailInput.value) {
+          messageBox.innerText = 'Please enter your email.';
+          return;
+        }
+        emailInput.classList.add('hidden');
+        passwordInput.classList.remove('hidden');
+        step = 2;
+        submitBtn.textContent = isLogin ? 'Login' : 'Next';
+        return;
+      }
+
+      if (step === 2 && !isLogin) {
+        if (!passwordInput.value) {
+          messageBox.innerText = 'Please enter your password.';
+          return;
+        }
+        passwordInput.classList.add('hidden');
+        usernameInput.classList.remove('hidden');
+        step = 3;
+        submitBtn.textContent = 'Sign Up';
+        return;
+      }
+
+      if (step === 2 && isLogin) {
+        if (!passwordInput.value) {
+          messageBox.innerText = 'Please enter your password.';
+          return;
+        }
+        usernameInput.classList.add('hidden');
+      }
+      if (step === 3 && !usernameInput.value) {
+        messageBox.innerText = 'Please enter your username.';
+        return;
+      }
+      if (step === 3 && isLogin) {
+        messageBox.innerText = 'Please wait while we log you in...';
+      } else {
+        messageBox.innerText = 'Please wait while we sign you up...';
+      }
+      messageBox.style.color = '#444';
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.7';
+      submitBtn.style.cursor = 'not-allowed';
+      emailInput.disabled = true;
+      passwordInput.disabled = true;
+      usernameInput.disabled = true;
+      setTimeout(() => {
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        submitBtn.style.cursor = 'pointer';
+      }, 2000);
+      const body = isLogin
+        ? {
+            email: emailInput.value,
+            password: passwordInput.value
+          }
+        : {
+            username: usernameInput.value,
+            email: emailInput.value,
+            password: passwordInput.value
+          };
+
+      const endpoint = isLogin
+        ? 'http://localhost:3000/api/auth/login'
+        : 'http://localhost:3000/api/auth/signup';
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        const text = await res.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          messageBox.innerText = `⚠️ Invalid server response:\n${text}`;
+          return;
+        }
+
+        messageBox.innerText = data.message || 'No message';
+
+        if (res.ok && data.token) {
+          localStorage.setItem('token', data.token);
+          messageBox.style.color = 'green';
+          messageBox.innerText = `✅ Welcome, ${data.user.username || data.user.email}!`;
+        } else {
+          messageBox.style.color = '#d8000c';
+        }
+
+      } catch (err) {
+        messageBox.innerText = '⚠️ Network error: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
